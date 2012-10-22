@@ -1,0 +1,139 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Orders List</h2>
+<link href="~/css/smoothness/jquery-ui-1.9.0.custom.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.8.2.js"></script>
+<script src="~/Scripts/jquery-ui-1.9.0.custom.min.js"></script>
+<script src="~/Scripts/jsrender.js"></script>
+
+<script id="customerTemplate" src="../Scripts/jsrender.js" type="text/x-jsrender">
+         <table border="1" id="tblemp">
+          <tbody>
+              <tr>
+                  <td style="width:400">{{:OrderID}}</td>
+                  <td>{{:CustomerID}}</td>
+                  <td>{{:EmployeeID}}</td>
+                  <td>{{:OrderDate}}</td>
+                  <td>{{:RequiredDate}}</td>
+                  <td>{{:ShippedDate}}</td>
+                  <td>{{:ShipVia}}</td>
+                  <td>{{:Freight}}</td>
+                  <td>{{:ShipName}}</td>
+                  <td>{{:ShipAddress}}</td>
+                  <td>{{:ShipCity}}</td>
+                  <td>{{:ShipRegion}}</td>
+                  <td>{{:ShipPostalCode}}</td>
+                  <td>{{:ShipCountry}}</td>
+              </tr>
+          </tbody>
+      </table>
+    </script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        
+        $("#btngetdata").click(function () {
+        
+            $.ajax({
+                type: 'GET',
+                url: "http://localhost:51914/api/Orders",
+                datatype: "application/json; charset=utf-8",
+                success: function (data) {
+                    var customers = [];
+                    customers = getDataInArray(data);
+                    //for (var i = 0; i < customers.length; i++) {
+                    //    var progressCount = {
+                    //        value: i 
+                    //    };
+            
+                    $("#progressBar").progressbar(
+                        {
+                            value:0,
+                        change: function (evt, u) {
+                            //showProgress(customers[i]);
+                            var p = $("#progressBar").progressbar("option", "value");
+                            
+                           var ele = $('<div><div>');
+                           ele.html($("#customerTemplate").render(customers[p]));
+                            displayCustomerInformation(ele);
+                        }
+                    });
+
+
+                    setTimeout(updateProgress, 2000);
+                    
+                    //}
+
+
+
+                }
+            });
+            });
+        
+        //Render the Data
+        function displayCustomerInformation(ele) {
+            
+            $("#customerInfoContainer").append(ele);
+           // $(ele).html($("#customerTemplate").render(data));
+         // $("#customerInfoContainer").html($("#customerTemplate").render(data));
+        }
+
+        function getDataInArray(array)
+        {
+            var cust = [];
+            $.each(array, function (i, d) {
+                cust.push(d);
+            });
+            return cust;
+        }
+
+        function showProgress(cust)
+        {
+           // alert(cust.OrderID);
+            setTimeout(function () {
+                var ele = $('<div><div>');
+                ele.html($("#customerTemplate").render(cust));
+                displayCustomerInformation(ele);
+            }, 200);
+        }
+
+        function updateProgress()
+        {
+            //alert(customers);
+            var progress = $("#progressBar").progressbar("option", "value");
+            if (progress < 100)
+            {
+                $("#progressBar").progressbar("option", "value", progress + 1);
+                setTimeout(updateProgress, 2000);
+            }
+        }
+         
+    });
+</script>
+
+<body>
+    <form id="form1" runat="server">
+  <input type="button" value="GetData" id="btngetdata" />
+    <div id="progressBar" ></div>
+        <br />
+     <table>
+             <thead>
+              <tr>
+                  <td>OrderID</td><td>SustomerID</td><td>EmployeeID</td><td>OrderDate</td>
+                  <td>RequireDate</td>
+                  <td>ShippedDate</td><td>ShipVia</td><td>ShipName</td><td>ShipAddress</td>
+                  <td>ShipCity</td><td>ShipRegion</td><td>ShiPostalCode</td><td>ShipCountry</td>
+              </tr>
+          </thead>
+        </table>
+    <div id="customerInfoContainer">
+       
+    </div>
+    
+    </form>
+</body>
+
+
+

@@ -1,0 +1,134 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Orders List</h2>
+<link href="~/css/smoothness/jquery-ui-1.9.0.custom.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.8.2.js"></script>
+<script src="~/Scripts/jquery-ui-1.9.0.custom.min.js"></script>
+<script src="~/Scripts/jsrender.js"></script>
+
+<!--The Template created will be reused to generate Table. 
+    This contain tags expression using {{:}} syntax-->
+
+<script id="customerTemplate" src="../Scripts/jsrender.js" type="text/x-jsrender">
+
+              <tr style="border: solid 1px #808080">
+                  <td style="width:100">{{:OrderID}}</td>
+                  <td style="width:100">{{:CustomerID}}</td>
+                  <td style="width:100">{{:EmployeeID}}</td>
+                  <td style="width:100">{{:OrderDate}}</td>
+                  <td style="width:100">{{:RequiredDate}}</td>
+                  <td style="width:100">{{:ShippedDate}}</td>
+                  <td style="width:300">{{:ShipVia}}</td>
+                  <td style="width:200">{{:Freight}}</td>
+                  <td style="width:400">{{:ShipName}}</td>
+                  <td style="width:400">{{:ShipAddress}}</td>
+                  <td style="width:200">{{:ShipCity}}</td>
+                  <td style="width:200">{{:ShipRegion}}</td>
+                  <td style="width:200">{{:ShipPostalCode}}</td>
+                  <td style="width:200">{{:ShipCountry}}</td>
+              </tr>
+
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        ///The Button Click whihc makes an ajax call to Web API
+        $("#btngetdata").click(function () {
+
+            $.ajax({
+                type: 'GET',
+                url: "http://localhost:51914/api/Orders",
+                datatype: "application/json; charset=utf-8",
+                success: function (data) {
+                    var customers = [];
+                    customers = getDataInArray(data); //Convert the JSON response into an Array
+
+                    //Handle Change event of the progressbar
+                    $("#progressBar").progressbar(
+                        {
+                            value: 0,
+                            change: function (evt, u) {
+
+                                //Get the current value of the progressbar
+                                var p = $("#progressBar").progressbar("option", "value");
+                                //Create a <div> element and render it by putting an array data in it
+                                var ele = $('<div><div>');
+                                ele.html($("#customerTemplate").render(customers[p]));
+                                displayCustomerInformation(ele);
+                            }
+                        });
+                    //Set timeout for the progressbar to fire change event 200 milliseconds are set here
+                    setTimeout(updateProgress, 200);
+                }
+            });
+        });
+
+        //Render the Data
+        function displayCustomerInformation(ele) {
+
+            $("#customerInfoContainer").append(ele);
+
+        }
+
+        ///Method to convertt the JSON data into an array
+        function getDataInArray(array) {
+            var cust = [];
+            $.each(array, function (i, d) {
+                cust.push(d);
+            });
+            return cust;
+        }
+
+        ///Method to update the progressbar
+        function updateProgress() {
+            var progress = $("#progressBar").progressbar("option", "value");
+            if (progress < 100) {
+                //Increase the value of the progress by 1
+                $("#progressBar").progressbar("option", "value", progress + 1);
+                setTimeout(updateProgress, 200);
+            }
+        }
+
+    });
+</script>
+
+<body class="ui-widget">
+    <form id="form1" runat="server">
+        <!--Button to make an async call to WEB API-->
+        <input type="button" value="GetData" id="btngetdata" />
+        <!--The ProgressBar-->
+        <div id="progressBar"></div>
+        <br />
+        <!--Table to Display Header-->
+        <table style="border: solid 1px #808080; padding:0; margin:0; border-collapse:collapse " id="tblemp">
+            <thead>
+                <tr style="background-color:#dbd0d0">
+                    <td>OrderID</td>
+                    <td style="width: 100px">Customer ID</td>
+                    <td style="width: 100px">Employee ID</td>
+                    <td style="width: 100px">Order Date</td>
+                    <td style="width: 100px">Require Date</td>
+                    <td style="width: 100px">Shipped Date</td>
+                    <td style="width: 300px">Ship Via</td>
+                    <td style="width: 300px">Freight</td>
+                    <td style="width: 200px">Ship Name</td>
+                    <td style="width: 400px">Ship Address</td>
+                    <td style="width: 200px">Ship City</td>
+                    <td style="width: 200px">Ship Region</td>
+                    <td style="width: 200px">Ship PostalCode</td>
+                    <td style="width: 200px">Ship Country</td>
+                </tr>
+            </thead>
+            <!--The Div Container to display the Dynamically generated Table-->
+            <tbody id="customerInfoContainer">
+            </tbody>
+        </table>
+
+
+    </form>
+</body>
+
+
+

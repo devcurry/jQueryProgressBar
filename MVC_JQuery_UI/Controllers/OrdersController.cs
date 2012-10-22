@@ -17,13 +17,18 @@ namespace MVC_JQuery_UI.Controllers
     {
         private NorthwindEntities db = new NorthwindEntities();
 
-        // GET api/Orders
-        public IEnumerable<Order> GetOrders()
+        public int GetOrders()
         {
-            Debug.Print(db.Orders.Count<Order>().ToString());
-            return db.Orders.AsEnumerable();
+            return db.Orders.Count<Order>();
         }
 
+        // GET api/Orders
+        public IEnumerable<Order> GetOrders(int offset, int fetchRecords)
+        {
+            return db.Orders.OrderBy(o=>o.OrderID).Skip<Order>(offset).
+                Take<Order>(fetchRecords).AsEnumerable();
+        }
+        
         // GET api/Orders/5
         public Order GetOrder(int id)
         {

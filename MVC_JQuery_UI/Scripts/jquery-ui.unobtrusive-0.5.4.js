@@ -1,0 +1,495 @@
+﻿/**
+* @preserve Copyright (c) 2012 Attila Losonc
+* Licensed under the MS-PL license: https://bitbucket.org/attilax/jqueryuihelpers/src/9051d0806182/license.txt
+*/
+
+(function ($) {
+    $(function () {
+        var elements = $('[data-jqui-type]');
+        initJQueryUI(elements);
+
+        if ($['validator'] && $['validator']['methods']) {
+            var original = $['validator']['methods']['date'];
+            $['validator']['methods']['date'] = function (value, element) {
+                var format = $(element).data('jqui-dpicker-dateformat');
+                if (format) {
+                    var date = null;
+                    try {
+                        date = $.datepicker.parseDate(format, value);
+                    }
+                    catch (e) { }
+                    return this['optional'](element) || date != null;
+                }
+                return original.call(this, value, element);
+            }
+        }
+    });
+
+
+    $['fn']['jQueryUIHelpers'] = function () {
+        var elements = this.find('[data-jqui-type]').andSelf();
+        initJQueryUI(elements);
+        return this;
+    };
+
+    function initJQueryUI(elements) {
+        elements.filter('[data-jqui-type="themeswitcher"]').each(function () {
+            var ts = $(this);
+            var options = createOptions(ts, 'data-jqui-tswitcher-',
+        ['loadTheme', 'height', 'width', 'initialText', 'buttonPreText', 'closeOnSelect', 'buttonHeight', 'cookieName'], [],
+        ['onOpen', 'onClose', 'onSelect'], []);
+            ts.themeswitcher(options);
+        });
+        elements.filter('[data-jqui-type="dialog"]').each(function () {
+            var dl = $(this);
+            var options = createOptions(dl, 'data-jqui-dialog-',
+        ['autoOpen', 'closeOnEscape', 'closeText', 'dialogClass', 'disabled', 'draggable', 'height', 'hide', 'maxHeight',
+        'maxWidth', 'minHeight', 'minWidth', 'modal', 'resizable', 'show', 'stack', 'title', 'width', 'zIndex'], ['position'],
+        ['beforeClose', 'close', 'create', 'drag', 'dragStart', 'dragStop', 'focus', 'open', 'resize', 'resizeStart', 'resizeStop'],
+        [], []);
+            setupDialogUniqueAttributes(dl, options);
+            dl.dialog(options);
+            setupDialogBindings(dl);
+        });
+        elements.filter('[data-jqui-type="slider"]').each(function () {
+            var sl = $(this);
+            var options = createOptions(sl, 'data-jqui-slider-',
+        ['animate', 'disabled', 'max', 'min', 'orientation', 'range', 'step', 'value'], ['values'],
+        ['create', 'start', 'slide', 'change', 'stop']);
+            setupSliderUniqueAttributes(sl, options);
+            sl.slider(options);
+        });
+        elements.filter('[data-jqui-type="button"]').each(function () {
+            var bt = $(this);
+            var options = createOptions(bt, 'data-jqui-button-', ['disabled', 'text', 'label'], [], ['create'], ['icons']);
+            bt.button(options);
+        });
+        elements.filter('[data-jqui-type="buttonset"]').each(function () {
+            var bs = $(this);
+            bs.buttonset();
+        });
+        elements.filter('[data-jqui-type="accordion"]').each(function () {
+            var ac = $(this);
+            var options = createOptions(ac, 'data-jqui-acc-', ['disabled', 'active', 'animated', 'autoHeight', 'clearStyle',
+        'collapsible', 'event', 'fillSpace', 'header', 'navigation'], [], ['navigationFilter', 'create', 'change', 'changestart'],
+        ['icons']);
+            ac.accordion(options);
+        });
+        elements.filter('[data-jqui-type="tabs"]').each(function () {
+            var ta = $(this);
+            var options = createOptions(ta, 'data-jqui-tabs-',
+        ['cache', 'collapsible', 'deselectable', 'event', 'idPrefix', 'panelTemplate', 'selected', 'spinner', 'tabTemplate'],
+        ['disabled'],
+        ['add', 'create', 'disable', 'enable', 'load', 'remove', 'select', 'show'], ['ajaxOptions', 'cookie', 'fx']);
+            resolveFunctions(options['ajaxOptions'], ['beforeSend', 'complete', 'dataFilter', 'error', 'success', 'xhr']);
+            initTabs(ta, ta.tabs(options));
+        });
+        elements.filter('[data-jqui-type="progressbar"]').each(function () {
+            var pb = $(this);
+            var options = createOptions(pb, 'data-jqui-pbar-',
+            ['disabled', 'value'], [],
+            ['change', 'complete', 'create']);
+            pb.progressbar(options);
+        });
+        elements.filter('[data-jqui-type="datepicker"]').each(function () {
+            var dp = $(this);
+            var options = createOptions(dp, 'data-jqui-dpicker-',
+            ['alternateField', 'alternateFormat', 'appendText', 'autoSize', 'buttonImage', 'buttonImageOnly', 'buttonText',
+            'changeMonth', 'changeYear', 'closeText', 'constrainInput', 'currentText', 'dateFormat', 'defaultDate', 'disabled',
+            'duration', 'firstDay', 'gotoCurrent', 'hideIfNoPrevNext', 'isRtl', 'maxDate', 'minDate', 'navigationAsDateFormat',
+            'nextText', 'prevText', 'selectOtherMonths', 'shortYearCutoff', 'showAnim', 'showButtonPanel', 'showCurrentAtPos',
+            'showMonthAfterYear', 'showOn', 'showOptions', 'showOtherMonths', 'showWeek', 'stepMonths', 'weekHeader',
+            'yearRange', 'yearSuffix'],
+            ['dayNames', 'dayNamesMin', 'dayNamesShort', 'monthNames', 'monthNamesShort'],
+            ['calculateWeek', 'create', 'beforeShow', 'beforeShowDay', 'onChangeMonthYear', 'onClose', 'onSelect'], [],
+            ['numberOfMonths']);
+            dp.datepicker(options);
+        });
+        elements.filter('[data-jqui-type="autocomplete"]').each(function () {
+            var ac = $(this);
+            var options = createOptions(ac, 'data-jqui-acomp-',
+            ['appendTo', 'autoFocus', 'delay', 'disabled', 'minLength'], [],
+            ['create', 'search', 'open', 'focus', 'select', 'close', 'change'], ['position']);
+            setupAutocompleteUniqueAttributes(ac, options);
+            ac.autocomplete(options);
+        });
+        elements.filter('[data-jqui-type="sortable"]').each(function () {
+            var so = $(this);
+            var options = createOptions(so, 'data-jqui-sort-',
+            ['appendTo', 'axis', 'cancel', 'connectWith', 'containment', 'cursor', 'delay', 'disabled', 'distance',
+            'dropOnEmpty', 'forceHelperSize', 'forcePlaceholderSize', 'handle', 'items', 'opacity', 'placeholder',
+            'revert', 'scroll', 'scrollSensitivity', 'scrollSpeed', 'tolerance', 'zIndex'], ['grid'],
+            ['activate', 'beforeStop', 'change', 'create', 'deactivate', 'out', 'over', 'receive', 'remove', 'sort',
+            'start', 'stop', 'update'],
+            ['cursorAt']);
+            setupSortableUniqueAttributes(so, options);
+            so.sortable(options);
+        });
+        elements.filter('[data-jqui-type="resizable"]').each(function () {
+            var rs = $(this);
+            var options = createOptions(rs, 'data-jqui-resiz-',
+            ['alsoResize', 'animate', 'animateDuration', 'animateEasing', 'aspectRatio', 'autoHide', 'cancel', 'containment',
+            'delay', 'disabled', 'distance', 'ghost', 'helper', 'maxHeight', 'maxWidth', 'minHeight', 'minWidth', 'handles'],
+            ['grid'], ['create', 'resize', 'start', 'stop'], []);
+            rs.resizable(options);
+        });
+        elements.filter('[data-jqui-type="draggable"]').each(function () {
+            var dg = $(this);
+            var options = createOptions(dg, 'data-jqui-drag-',
+            ['addClasses', 'appendTo', 'axis', 'cancel', 'connectToSortable', 'cursor', 'delay', 'disabled', 'distance',
+            'handle', 'iframeFix', 'opacity', 'refreshPositions', 'revert', 'revertDuration', 'scope', 'scroll',
+            'scrollSensitivity', 'scrollSpeed', 'snap', 'snapMode', 'snapTolerance', 'stack', 'zIndex'],
+            ['grid'], ['create', 'drag', 'start', 'stop'], ['cursorAt'], ['containment']);
+            setupDraggableUniqueAttributes(dg, options);
+            dg.draggable(options);
+        });
+        elements.filter('[data-jqui-type="droppable"]').each(function () {
+            var dp = $(this);
+            var options = createOptions(dp, 'data-jqui-drop-',
+            ['activeClass', 'addClasses', 'disabled', 'greedy', 'hoverClass', 'scope', 'tolerance'],
+            [], ['activate', 'create', 'deactivate', 'drop', 'out', 'over']);
+            setupDroppableUniqueAttributes(dp, options);
+            dp.droppable(options);
+        });
+        elements.filter('[data-jqui-type="selectable"]').each(function () {
+            var se = $(this);
+            var options = createOptions(se, 'data-jqui-select-',
+            ['autoRefresh', 'cancel', 'delay', 'disabled', 'distance', 'filter', 'tolerance'],
+            [], ['create', 'selected', 'selecting', 'start', 'stop', 'unselected', 'unselecting']);            
+            se.selectable(options);
+        });
+
+    };
+
+    function createOptions(element, prefix, propertyNames, arrayPropertyNames, functionPropertyNames, objectPropertyNames, variablePropertyNames) {
+        var options = {};
+        var attributeName, value, parts, arrayValue, i, j;
+        for (i = 0; i < propertyNames.length; i++) {
+            attributeName = prefix + propertyNames[i].toLowerCase();
+            value = element.attr(attributeName);
+            if (value !== undefined) {
+                options[propertyNames[i]] = tryConvert(value);
+            }
+        }
+        if (arrayPropertyNames) {
+            for (i = 0; i < arrayPropertyNames.length; i++) {
+                attributeName = prefix + arrayPropertyNames[i].toLowerCase();
+                value = element.attr(attributeName);
+                if (value !== undefined) {
+                    parts = value.split(',');
+                    arrayValue = [];
+                    for (j = 0; j < parts.length; j++) {
+                        arrayValue.push(tryConvert(parts[j]));
+                    }
+                    options[arrayPropertyNames[i]] = arrayValue;
+                }
+            }
+        }
+        if (variablePropertyNames) {
+            for (i = 0; i < variablePropertyNames.length; i++) {
+                attributeName = prefix + variablePropertyNames[i].toLowerCase();
+                value = element.attr(attributeName);
+                if (value !== undefined) {
+                    parts = value.split(',');
+                    if (parts.length === 1) {
+                        options[variablePropertyNames[i]] = tryConvert(value);
+                    }
+                    else {
+                        arrayValue = [];
+                        for (j = 0; j < parts.length; j++) {
+                            arrayValue.push(tryConvert(parts[j]));
+                        }
+                        options[variablePropertyNames[i]] = arrayValue;
+                    }
+                }
+            }
+        }
+        if (functionPropertyNames) {
+            for (i = 0; i < functionPropertyNames.length; i++) {
+                attributeName = prefix + functionPropertyNames[i].toLowerCase();
+                value = element.attr(attributeName);
+                if (value !== undefined) {
+                    options[functionPropertyNames[i]] = findObject(value);
+                }
+            }
+        }
+        if (objectPropertyNames) {
+            for (i = 0; i < objectPropertyNames.length; i++) {
+                attributeName = prefix + objectPropertyNames[i].toLowerCase();
+                value = element.attr(attributeName);
+                if (value !== undefined) {
+                    options[objectPropertyNames[i]] = JSON.parse(value);
+                }
+            }
+        }
+        return options;
+    }
+
+
+    function tryConvert(value) {
+        if (value.toLowerCase() === 'false') {
+            return false;
+        }
+        if (value.toLowerCase() === 'true') {
+            return true;
+        }
+        if (/^-?\d+$/.test(value)) {
+            return parseInt(value, 10);
+        }
+        return value;
+    }
+
+    function findObject(fullName) {
+        var parts = fullName.split('.');
+        var func = window[parts[0]];
+        for (var i = 1; i < parts.length; i++) {
+            if (func) {
+                func = func[parts[i]];
+            }
+        }
+        return func;
+    }
+
+    function resolveFunctions(obj, functionPropertyNames) {
+        if (!obj) return;
+        var propertyName;
+        for (var i = 0; i < functionPropertyNames.length; i++) {
+            propertyName = functionPropertyNames[i];
+            if (obj[propertyName]) {
+                obj[propertyName] = findObject(obj[propertyName]);
+            }
+        }
+    }
+
+    function setupAutocompleteUniqueAttributes(element, options) {
+        var source = element.attr('data-jqui-acomp-source');
+        if (source) {
+            // if source does not contain '/', treat it as an object
+            if (source.indexOf('/') < 0) {
+                source = findObject(source);
+            }
+            options['source'] = source;
+        }
+        var valueSelector = element.attr('data-jqui-acomp-hiddenvalue');
+        if (valueSelector) {
+            var validator = element.closest('form').data('validator');
+            if (validator) {
+                validator['settings']['ignore'] = '';
+            }
+            var valueElement = $('#' + valueSelector);
+            var userFocus = options['focus'];
+            options['focus'] = function (event, ui) {
+                if (userFocus) {
+                    userFocus.call(this, event, ui);
+                }
+                return false; // do not put the value into the input field
+            };
+            var userChange = options['change'];
+            options['change'] = function (event, ui) {
+                if (userChange) {
+                    var result = userChange.call(this, event, ui);
+                    if (result === false) {
+                        return false;
+                    }
+                }
+                if (!ui['item']) {
+                    valueElement.val('');
+                }
+            };
+            var userSelect = options['select'];
+            options['select'] = function (event, ui) {
+                if (userSelect) {
+                    var result = userSelect.call(this, event, ui);
+                    if (result === false) {
+                        return false;
+                    }
+                }
+                if (ui['item']['value']) {
+                    element.val(ui['item']['label']);
+                    valueElement.val(ui['item']['value']);
+                }
+                return false;
+            };
+            element.blur(function () {
+                if (!element.val()) {
+                    valueElement.val('');
+                }
+            });
+        }
+    }
+
+    function setupSliderUniqueAttributes(element, options) {
+        var names = element.attr('data-jqui-slider-names');
+        if (names) {
+            var userSlide = options['slide'];
+            options['slide'] = function (event, ui) {
+                if (userSlide) {
+                    var result = userSlide.call(this, event, ui);
+                    if (result === false) {
+                        return false;
+                    }
+                }
+                var ids = names.split(',');
+                if (ui['values']) {
+                    var value = '';
+                    var separator = ui['values'].length > 2 ? ', ' : '-';
+                    for (var i = 0; i < ui['values'].length; i++) {
+                        value += ui['values'][i];
+                        if (i !== ui['values'].length - 1) {
+                            value += separator;
+                        }
+                        $('#' + ids[i]).val(ui['values'][i]);
+                    }
+                    $(this).prev().html(value);
+                }
+                else {
+                    $(this).prev().html(ui['value']);
+                    $('#' + ids[0]).val(ui['value']);
+                }
+            }
+        }
+    }
+
+    function setupDialogUniqueAttributes(element, options) {
+        var acceptText, cancelText;
+        var buttons = element.attr('data-jqui-dialog-buttons');
+        var buttonArray = [];
+        if (buttons) {
+            var parts = buttons.split('|');
+            for (var i = 0; i < parts.length; i++) {
+                buttonArray[i] = JSON.parse(parts[i]);
+                buttonArray[i]['click'] = findObject(buttonArray[i]['click']);
+            }
+            options['buttons'] = buttonArray;
+        }
+        if (element.attr('data-jqui-dialog-confirm')) {
+            acceptText = element.attr('data-jqui-dialog-confirm-accept');
+            cancelText = element.attr('data-jqui-dialog-confirm-cancel');
+            buttonArray.push({ text: acceptText, click: function () {
+                element.dialog('close');
+                window.location = element.data('href');
+            }
+            });
+            buttonArray.push({ text: cancelText, click: function () {
+                element.dialog('close');
+            }
+            });
+            options['buttons'] = buttonArray;
+        }
+        if (element.attr('data-jqui-dialog-confirmajax')) {
+            acceptText = element.attr('data-jqui-dialog-confirm-accept');
+            cancelText = element.attr('data-jqui-dialog-confirm-cancel');
+            buttonArray.push({ text: acceptText, click: function () {
+                element.dialog('close');
+                var settings = element.data('ajaxSettings');
+                $.ajax(element.data('href'), settings);
+            }
+            });
+            buttonArray.push({ text: cancelText, click: function () {
+                element.dialog('close');
+            }
+            });
+            options['buttons'] = buttonArray;
+        }
+    }
+
+    function setupDialogBindings(element) {
+        attrValue = element.attr('data-jqui-dialog-triggerclick');
+        var triggerElement;
+        if (attrValue) {
+            triggerElement = $(attrValue);
+            if (triggerElement.length) {
+                triggerElement.on('click.jqueryuihelpers', function (e) {
+                    e.preventDefault();
+                    if (!element.dialog('isOpen')) {
+                        element.dialog('open');
+                    }
+                });
+            }
+        }
+        attrValue = element.attr('data-jqui-dialog-triggerhover');
+        if (attrValue) {
+            triggerElement = $(attrValue);
+            if (triggerElement.length) {
+                triggerElement.on('mouseenter.jqueryuihelpers', function (e) {
+                    e.preventDefault();
+                    if (!element.dialog('isOpen')) {
+                        element.dialog('open');
+                    }
+                });
+                triggerElement.on('mouseleave.jqueryuihelpers', function (e) {
+                    e.preventDefault();
+                    if (element.dialog('isOpen')) {
+                        element.dialog('close');
+                    }
+                });
+            }
+        }
+        attrValue = element.attr('data-jqui-dialog-confirm');
+        if (attrValue) {
+            triggerElement = $(attrValue);
+            if (triggerElement.length) {
+                triggerElement.on('click.jqueryuihelpers', function (e) {
+                    e.preventDefault();
+                    element.data('href', e.target['href']);
+                    if (!element.dialog('isOpen')) {
+                        element.dialog('open');
+                    }
+                });
+            }
+        }
+        attrValue = element.attr('data-jqui-dialog-confirmajax');
+        if (attrValue) {
+            var ajaxSettings = JSON.parse(element.attr('data-jqui-dialog-confirm-ajaxsettings'));
+            resolveFunctions(ajaxSettings, ['beforeSend', 'complete', 'dataFilter', 'error', 'success', 'xhr']);
+            var verificationToken = $('input[name="__RequestVerificationToken"]').val();
+            if (verificationToken) {
+                ajaxSettings['data'] = ajaxSettings['data'] || {};
+                ajaxSettings['data']['__RequestVerificationToken'] = verificationToken;
+            }
+            element.data('ajaxSettings', ajaxSettings);
+            $(document).on('click.jqueryuihelpers', attrValue, function (e) {
+                e.preventDefault();
+                element.data('href', e.target['href']);
+                if (!element.dialog('isOpen')) {
+                    element.dialog('open');
+                }
+            });
+        }
+    }
+
+    function initTabs(element, tabs) {
+        var rotateTime = element.attr('data-jqui-tabs-rotatetime');
+        var rotateContinue = element.attr('data-jqui-tabs-rotatecontinue') || false;
+        if (rotateTime) {
+            tabs.tabs('rotate', rotateTime, rotateContinue);
+        }
+    }
+
+    function setHelper(attributeName, element, options) {
+        var helper = element.attr(attributeName);
+        if (helper) {
+            if (helper !== 'original' && helper !== 'clone') {
+                helper = findObject(helper);
+            }
+            options['helper'] = helper;
+        }
+    }
+
+    function setupSortableUniqueAttributes(element, options) {
+        setHelper('data-jqui-sort-helper', element, options);
+    }
+
+    function setupDraggableUniqueAttributes(element, options) {
+        setHelper('data-jqui-drag-helper', element, options);
+    }
+
+    function setupDroppableUniqueAttributes(element, options) {
+        var accept = element.attr('data-jqui-drop-accept');
+        if (accept) {
+            var value = findObject(accept);
+            options['accept'] = value || accept;
+        }
+    }
+
+} (jQuery));

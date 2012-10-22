@@ -1,17 +1,24 @@
-﻿@{
-    ViewBag.Title = "Index";
-}
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Progress Bar Demo</title>
 
-<h2>Orders List</h2>
-<link href="~/css/smoothness/jquery-ui-1.9.0.custom.css" rel="stylesheet" />
-<script src="~/Scripts/jquery-1.8.2.js"></script>
-<script src="~/Scripts/jquery-ui-1.9.0.custom.min.js"></script>
-<script src="~/Scripts/jsrender.js"></script>
+    <link href="~/css/smoothness/jquery-ui-1.9.0.custom.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-1.8.2.js"></script>
+    <script src="~/Scripts/jquery-ui-1.8.24.min.js"></script>
+    <script src="~/Scripts/jsrender.js"></script>
+</head>
 
-<!--The Template created will be reused to generate Table. 
+<body class="ui-widget">
+    <h2>Orders List</h2>
+    @{
+        ViewBag.Title = "Index";
+    }
+
+    <!--The Template created will be reused to generate Table. 
     This contain tags expression using {{:}} syntax-->
 
-<script id="customerTemplate" src="../Scripts/jsrender.js" type="text/x-jsrender">
+    <script id="customerTemplate" src="../Scripts/jsrender.js" type="text/x-jsrender">
 
               <tr style="border: solid 1px #808080">
                   <td style="width:100">{{:OrderID}}</td>
@@ -30,81 +37,98 @@
                   <td style="width:200">{{:ShipCountry}}</td>
               </tr>
 
-</script>
+    </script>
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        ///The Button Click whihc makes an ajax call to Web API
-        $("#btngetdata").click(function () {
-
-            $.ajax({
-                type: 'GET',
-                url: "http://localhost:51914/api/Orders",
-                datatype: "application/json; charset=utf-8",
-                success: function (data) {
-                    var customers = [];
-                    customers = getDataInArray(data); //Convert the JSON response into an Array
-
-                    //Handle Change event of the progressbar
-                    $("#progressBar").progressbar(
-                        {
-                            value: 0,
-                            change: function (evt, u) {
-
-                                //Get the current value of the progressbar
-                                var p = $("#progressBar").progressbar("option", "value");
-                                //Create a <div> element and render it by putting an array data in it
-                                var ele = $('<div><div>');
-                                ele.html($("#customerTemplate").render(customers[p]));
-                                displayCustomerInformation(ele);
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var _this = this;
+            var offset = 0;
+            var fetch = 10;
+            var totalRecords = 0;
+            var custRecordsRendered = 0;
+            ///The Button Click whihc makes an ajax call to Web API
+            $("#btngetdata").click(function () {
+                offset = 0;
+                custRecordsRendered = 0;
+                $.ajax({
+                    type: 'GET',
+                    url: "/api/Orders",
+                    datatype: "application/json; charset=utf-8",
+                    success: function (data) {
+                        totalRecords = data;
+                        fetch = parseInt(totalRecords / 100);
+                        $("#progressBar").progressbar(0);
+                        //alert(fetch);
+                        getDataAtOffset();
+                    }
+                });
+                function getDataAtOffset() {
+                    $.ajax({
+                        type: 'GET',
+                        url: "/api/Orders?offset=" + offset * fetch + "&fetchRecords=" + fetch,
+                        datatype: "application/json; charset=utf-8",
+                        success: function (customerData) {
+                            var customers = [];
+                            customers = getDataInArray(customerData); //Convert the JSON response into an Array
+                            var custCount = customers.length;
+                            for (var i = 0; i < custCount; i++) {
+                                displayCustomerInformation($("#customerTemplate").render(customers[i]));
+                                custRecordsRendered = custRecordsRendered + 1;
                             }
-                        });
-                    //Set timeout for the progressbar to fire change event 200 milliseconds are set here
-                    setTimeout(updateProgress, 200);
+                            updateProgress();
+                            if (offset * fetch < totalRecords) {
+                                offset = offset + 1;
+                                getDataAtOffset();
+                            }
+                        }
+                    });
                 }
             });
-        });
 
-        //Render the Data
-        function displayCustomerInformation(ele) {
 
-            $("#customerInfoContainer").append(ele);
-
-        }
-
-        ///Method to convertt the JSON data into an array
-        function getDataInArray(array) {
-            var cust = [];
-            $.each(array, function (i, d) {
-                cust.push(d);
-            });
-            return cust;
-        }
-
-        ///Method to update the progressbar
-        function updateProgress() {
-            var progress = $("#progressBar").progressbar("option", "value");
-            if (progress < 100) {
-                //Increase the value of the progress by 1
-                $("#progressBar").progressbar("option", "value", progress + 1);
-                setTimeout(updateProgress, 200);
+            //Render the Data
+            function displayCustomerInformation(ele) {
+                $("#customerInfoContainer").append(ele);
             }
-        }
 
-    });
-</script>
+            ///Method to convertt the JSON data into an array
+            function getDataInArray(array) {
+                var cust = [];
+                $.each(array, function (i, d) {
+                    cust.push(d);
+                });
+                return cust;
+            }
 
-<body class="ui-widget">
+            ///Method to update the progressbar
+            function updateProgress() {
+                var progress = $("#progressBar").progressbar("option", "value");
+                if (progress < 100) {
+                    //Increase the value of the progress by 1
+                    $("#progressBar").progressbar("option", "value", progress + 1);
+                }
+                $("#completeCount").text(custRecordsRendered + "/" + totalRecords + " Records Rendered");
+            }
+
+        });
+    </script>
+
+
     <form id="form1" runat="server">
         <!--Button to make an async call to WEB API-->
         <input type="button" value="GetData" id="btngetdata" />
         <!--The ProgressBar-->
-        <div id="progressBar"></div>
+        <div id="progressBar">
+        </div>
+        <div style="float: left; padding-left: 10px">
+            <label id="completeCount"></label>
+        </div>
+
         <br />
         <!--Table to Display Header-->
-        <table style="border: solid 1px #808080; padding:0; margin:0; border-collapse:collapse " id="tblemp">
+        <table style="border: solid 1px #808080; padding: 0; margin: 0; border-collapse: collapse" id="tblemp">
             <thead>
-                <tr style="background-color:#dbd0d0">
+                <tr style="background-color: #dbd0d0">
                     <td>OrderID</td>
                     <td style="width: 100px">Customer ID</td>
                     <td style="width: 100px">Employee ID</td>
@@ -129,6 +153,7 @@
 
     </form>
 </body>
+</html>
 
 
 

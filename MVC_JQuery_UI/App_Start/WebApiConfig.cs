@@ -10,6 +10,11 @@ namespace MVC_JQuery_UI
         public static void Register(HttpConfiguration config)
         {
             config.Routes.MapHttpRoute(
+                name: "OrdersWithOffset",
+                routeTemplate: "api/{controller}/{offset}/{fetchRecords}",
+                defaults: new { offset = RouteParameter.Optional, fetchRecords = RouteParameter.Optional }
+            ); 
+            config.Routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
